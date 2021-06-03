@@ -17,7 +17,7 @@ export class BaseStorage<T = {}, M = ""> extends EventHandler {
 
   static storage: BaseStorage;
 
-  private constructor(executor: DataBaseExecutor) {
+  constructor(executor: DataBaseExecutor) {
     super();
     this.dataBaseExecutor = executor;
   }
@@ -25,8 +25,8 @@ export class BaseStorage<T = {}, M = ""> extends EventHandler {
   /**
    * Creates instatce of storage and set it to storage field
    */
-  public static init(executor: DataBaseExecutor) {
-    this.storage = this.constructor.call(executor);
+  public static init(storage: BaseStorage) {
+    this.storage = storage;
   }
 
   public get storageName(): string {
