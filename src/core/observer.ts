@@ -8,8 +8,8 @@ export class Observer {
 
   constructor(
     storage: BaseStorage,
-    onWrite?: () => void,
-    onRemove?: () => void
+    onWrite?: (...args: any[]) => void,
+    onRemove?: (...args: any[]) => void
   ) {
     this.writeEventName = `${storage.constructor.name}_write`;
     this.removeEventName = `${storage.constructor.name}_remove`;
