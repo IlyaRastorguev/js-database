@@ -6,8 +6,6 @@ name: ts package
 on:
   push:
     branches: [ main ]
-  pull_request:
-    branches: [ main ]
 
 jobs:
   publish-npm:
