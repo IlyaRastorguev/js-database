@@ -1,46 +1,227 @@
-# Getting Started with Create React App
+# Js-database - library for simple indexeddb usage
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+## **Usage guide**
 
-## Available Scripts
+### **Let's start**
 
-In the project directory, you can run:
+First what you need to do is install this library to yours project:
 
-### `npm start`
+```bash
+npm i js-database --save
+```
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+### **Create model**
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+Next step create your first storage model. You can do it easily:
 
-### `npm test`
+```javascript
+import { BaseStorage } from "js-database";
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+export class TestStorage extends BaseStorage {
+  model = {
+    name: "Test",
+    params: {
+      keyPath: "id",
+    },
+  };
+}
+```
 
-### `npm run build`
+if you don't whant or your data haven't unique id to be used for keyPath you can add autoincrement option to yours model:
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+```javascript
+import { BaseStorage } from "js-database";
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+export class TestStorage extends BaseStorage {
+  model = {
+    name: "Test",
+    params: {
+      autoIncrement: true,
+    },
+  };
+}
+```
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+### **Initialize database**
 
-### `npm run eject`
+After creating yours storage class, you need to initialize database like that:
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+```javascript
+import { initializeDatabase } from "js-database";
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+initializeDatabase("TEST", 1, TestStorage);
+```
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+That's it! Now you can use "TestStorage" for storing data
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+Now let's talk how to work with our storage
 
-## Learn More
+### **Waiting for initialization**
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+In some cases for example when database is updating you need to hold your app for using database
+For that case you can subscribe for 'ready' event that fires when database is ready for accept transactions
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+For react users:
+
+```javascript
+import React, { useState } from "react";
+import { useStorageInit } from "js-database";
+
+const Component = () => {
+  const [isReady, setReady] = useState(false);
+
+  useStorageInit(() => {
+    setReady(true);
+  });
+
+  if (isReady) return <>Some code</>;
+
+  return <></>;
+};
+```
+
+For vanilla js:
+
+```javascript
+import { subscribeForDatabaseReady } from "js-database";
+
+subscribeForDatabaseReady(() => {
+  //do something
+});
+```
+
+### **Set data to storage**
+
+Basic adding:
+
+```javascript
+TestStorage.storage.setItem({
+  id: 1,
+  data: { any: { type: { of: "data" } } },
+});
+```
+
+> [!WARNING]
+> setItem applyes object that corresponds to yours storage model - if you add keyPath to params it must be in object that you put to the setItem method
+
+You can provide second argument for setItemModel to update item in storage:
+
+```javascript
+TestStorage.storage.setItem(
+  {
+    data: { any: { type: { of: "data" } } },
+  },
+  key
+);
+```
+
+### **Get item**
+
+Basic getter:
+
+```javascript
+TestStorage.storage
+  .getItem(key)
+  .then((items) => {
+    setList(items);
+  })
+  .catch((e) => {
+    console.warn(e);
+  });
+```
+
+Get all items as list:
+
+```javascript
+TestStorage.storage
+  .getAllItems()
+  .then((items) => {
+    setList(items);
+  })
+  .catch((e) => {
+    console.warn(e);
+  });
+```
+
+Get all items as Map object:
+
+```javascript
+TestStorage.storage
+  .getAllItemsWithKeys()
+  .then((items) => {
+    setList(items);
+  })
+  .catch((e) => {
+    console.warn(e);
+  });
+```
+
+### **Removing items**
+
+Remuve single item:
+
+```javascript
+TestStorage.storage.removeItem(id);
+```
+
+Remove all items:
+
+```javascript
+ToDoStorage.storage.removeAllItems();
+```
+
+### **Subscribe on changes**
+
+You can subscribe on storage changes to provide actual state of yours app components
+
+For React users:
+
+```javascript
+import React from "react";
+import { useStorageEvent } from "js-database";
+import { TestStorage } from "test-storage";
+
+const Component = () => {
+  const doSomeThingOnAddingNewItems = useCallback(() => {
+    //do some operations
+  }, []);
+
+  const doSomeThingOnRemovingItems = useCallback(() => {
+    //do some operations
+  }, []);
+
+  useStorageEvent(
+    TestStorage,
+    doSomeThingOnAddingNewItem,
+    doSomeThingOnRemovingItems
+  );
+
+  return <></>;
+};
+```
+
+For vanilla js:
+
+```javascript
+import { subscribeForChanges } from "js-database";
+import { TestStorage } from "test-storage";
+
+const doSomeThingOnAddingNewItems = () => {
+  //do some operations
+};
+
+const doSomeThingOnRemovingItems = () => {
+  //do some operations
+};
+
+subscribeForChanges(
+  TestStorage,
+  doSomeThingOnAddingNewItems,
+  doSomeThingOnRemovingItems
+);
+```
+
+### **Demo**
+
+Little demo for more understanding
+[view on codesandbox.io](https://codesandbox.io/s/js-database-demo-nc04n)
