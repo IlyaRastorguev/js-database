@@ -58,8 +58,7 @@ Now let's talk how to work with our storage
 
 ### **Waiting for initialization**
 
-In some cases for example when database is updating you need to hold your app for using database
-For that case you can subscribe for 'ready' event that fires when database is ready for accept transactions
+In some cases for example when database is updating you need to hold of using database from your app. For that case you can subscribe for 'ready' event that fires when database is ready for accept transactions
 
 For react users:
 
@@ -103,8 +102,9 @@ TestStorage.storage.setItem({
 
 > [!WARNING]
 > setItem applyes object that corresponds to yours storage model - if you add keyPath to params it must be in object that you put to the setItem method
+> in this example this id property "id"
 
-You can provide second argument for setItemModel to update item in storage:
+You can provide second argument for setItem to update particular item in storage:
 
 ```javascript
 TestStorage.storage.setItem(
@@ -122,8 +122,8 @@ Basic getter:
 ```javascript
 TestStorage.storage
   .getItem(key)
-  .then((items) => {
-    setList(items);
+  .then((item) => {
+    setItem(item);
   })
   .catch((e) => {
     console.warn(e);
