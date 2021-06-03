@@ -1,7 +1,6 @@
+import { StorageType } from "../types";
 import { EventHandler } from "./eventHandler";
 import { BaseStorage } from "./storage";
-
-declare type StorageType = typeof BaseStorage;
 
 export class DataBaseExecutor extends EventHandler {
   private dbInstanceName: string;
@@ -17,14 +16,14 @@ export class DataBaseExecutor extends EventHandler {
     this.dbInstanceName = instanseName;
     this.storages = new Set([...storages]);
     const request = this.indexeddb.open(this.dbInstanceName, version);
+
+    this.storages.forEach((storage) => {
+      storage.init(
+        new (storage as { new (executor: DataBaseExecutor): BaseStorage })(this)
+      );
+    });
+
     request.onsuccess = () => {
-      this.storages.forEach((storage) => {
-        storage.init(
-          new (storage as { new (executor: DataBaseExecutor): BaseStorage })(
-            this
-          )
-        );
-      });
       this.fireEvent("onDataBaseReady", { status: true });
     };
     request.onerror = (ev) => {
@@ -38,7 +37,7 @@ export class DataBaseExecutor extends EventHandler {
       const unusedStorages = new Set([...result.objectStoreNames]);
       this.storages.forEach((storage) => {
         storage.storage.onDbUpgrade(result, request);
-        unusedStorages.delete(storage.storage.storageName);
+        unusedStorages.delete(storage.storage.model.name);
       });
 
       unusedStorages.forEach((storageName) => {

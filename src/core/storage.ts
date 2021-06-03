@@ -8,7 +8,6 @@ import { EventHandler } from "./eventHandler";
  * and avaliable in "storage" static field
  */
 export class BaseStorage<T = {}, M = ""> extends EventHandler {
-  private _storageName: string = "";
   private _model: IModel = {} as IModel;
 
   private dataBaseExecutor;
@@ -29,21 +28,17 @@ export class BaseStorage<T = {}, M = ""> extends EventHandler {
     this.storage = storage;
   }
 
-  public get storageName(): string {
-    return this._storageName;
-  }
-
   public get model() {
     return this._model;
   }
 
+  public set model(model: IModel) {
+    this._model = model;
+  }
+
   getObjectStore() {
     return new Promise((resolve, reject) => {
-      this.dataBaseExecutor.getObjectStorage(
-        this._storageName,
-        resolve,
-        reject
-      );
+      this.dataBaseExecutor.getObjectStorage(this.model.name, resolve, reject);
     });
   }
 
@@ -52,7 +47,7 @@ export class BaseStorage<T = {}, M = ""> extends EventHandler {
    */
   public onDbUpgrade(dbProvider: any, request: any) {
     const isDataBaseExists: boolean =
-      Object.values(dbProvider.objectStoreNames).indexOf(this.storageName) !==
+      Object.values(dbProvider.objectStoreNames).indexOf(this.model.name) !==
       -1;
     if (!isDataBaseExists) {
       const objectStorage = dbProvider.createObjectStore(
@@ -61,7 +56,7 @@ export class BaseStorage<T = {}, M = ""> extends EventHandler {
       );
       this.applyMigrations(objectStorage);
     } else {
-      this.applyMigrations(request.transaction.objectStore(this.storageName));
+      this.applyMigrations(request.transaction.objectStore(this.model.name));
     }
   }
 
@@ -77,7 +72,7 @@ export class BaseStorage<T = {}, M = ""> extends EventHandler {
    */
   public getItem(key: M) {
     return new Promise((resolve, reject) => {
-      this.dataBaseExecutor.get(this._storageName, key, resolve, reject);
+      this.dataBaseExecutor.get(this.model.name, key, resolve, reject);
     });
   }
 
@@ -87,7 +82,7 @@ export class BaseStorage<T = {}, M = ""> extends EventHandler {
    */
   public getAllItems() {
     return new Promise((resolve, reject) => {
-      this.dataBaseExecutor.getAll(this._storageName, resolve, reject);
+      this.dataBaseExecutor.getAll(this.model.name, resolve, reject);
     });
   }
 
@@ -97,7 +92,7 @@ export class BaseStorage<T = {}, M = ""> extends EventHandler {
    */
   public getAllItemsWithKeys() {
     return new Promise((resolve, reject) => {
-      this.dataBaseExecutor.getAllWithKeys(this._storageName, resolve, reject);
+      this.dataBaseExecutor.getAllWithKeys(this.model.name, resolve, reject);
     });
   }
 
@@ -106,7 +101,7 @@ export class BaseStorage<T = {}, M = ""> extends EventHandler {
    */
   public setItem(item: T) {
     this.dataBaseExecutor.set(
-      this._storageName,
+      this.model.name,
       item,
       (result: unknown) => {
         this.fireEvent(this.writeEventName, { result });
@@ -121,7 +116,7 @@ export class BaseStorage<T = {}, M = ""> extends EventHandler {
    */
   public removeItem(key: M) {
     this.dataBaseExecutor.remove(
-      this._storageName,
+      this.model.name,
       key,
       () => {
         this.fireEvent(this.removeEventName, { key });
@@ -136,7 +131,7 @@ export class BaseStorage<T = {}, M = ""> extends EventHandler {
    */
   public removeAllItems() {
     this.dataBaseExecutor.clear(
-      this._storageName,
+      this.model.name,
       () => {
         this.fireEvent(this.removeEventName, { key: "*" });
       },
