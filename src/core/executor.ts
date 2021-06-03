@@ -167,6 +167,31 @@ export class DataBaseExecutor extends EventHandler {
     };
   }
 
+  setByKey(
+    from: string,
+    value: any,
+    key: any,
+    onSuccess: (value: unknown) => void,
+    onError: (reason?: any) => void
+  ) {
+    const request = this.indexeddb.open(this.dbInstanceName);
+    request.onerror = (ev) => {
+      onError(ev.toString());
+    };
+    request.onsuccess = ({ target: { result } }: any) => {
+      const db = result;
+      const transaction = db.transaction([from], "readwrite");
+      const objectStore = transaction.objectStore(from);
+      const request = objectStore.put(value, key);
+      request.onerror = function (event: any) {
+        onError(event.toString());
+      };
+      request.onsuccess = function ({ target: { result } }: any) {
+        onSuccess(result);
+      };
+    };
+  }
+
   remove(
     from: string,
     key: any,

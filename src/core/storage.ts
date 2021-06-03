@@ -99,15 +99,26 @@ export class BaseStorage<T = {}, M = ""> extends EventHandler {
   /**
    * Method used for setting new item to the storage
    */
-  public setItem(item: T) {
-    this.dataBaseExecutor.set(
-      this.model.name,
-      item,
-      (result: unknown) => {
-        this.fireEvent(this.writeEventName, { result });
-      },
-      () => {}
-    );
+  public setItem(item: T, key?: M) {
+    if (key) {
+      this.dataBaseExecutor.setByKey(
+        this.model.name,
+        item,
+        key,
+        (result: unknown) => {
+          this.fireEvent(this.writeEventName, { result });
+        },
+        () => {}
+      );
+    } else
+      this.dataBaseExecutor.set(
+        this.model.name,
+        item,
+        (result: unknown) => {
+          this.fireEvent(this.writeEventName, { result });
+        },
+        () => {}
+      );
   }
 
   public setItems(items: T[]) {}
