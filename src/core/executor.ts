@@ -2,6 +2,8 @@ import { StorageType } from "../types";
 import { EventHandler } from "./eventHandler";
 import { BaseStorage } from "./storage";
 
+export const DataBaseReadyEvent = "onDataBaseReady"
+
 export class DataBaseExecutor extends EventHandler {
   private dbInstanceName: string;
   private storages: Set<StorageType>;
@@ -24,7 +26,7 @@ export class DataBaseExecutor extends EventHandler {
     });
 
     request.onsuccess = () => {
-      this.fireEvent("onDataBaseReady", { status: true });
+      this.fireEvent(DataBaseReadyEvent, { status: true });
     };
     request.onerror = (ev) => {
       console.error(

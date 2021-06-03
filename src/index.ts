@@ -2,7 +2,8 @@ import { DataBaseExecutor } from "./core/executor";
 import { StorageType } from "./types";
 
 export { BaseStorage } from "./core/storage";
-export * from "./react"
+export * from "./react";
+export * from "./vanilla";
 
 export const initializeDatabase = (
   dataBaseName: string,
