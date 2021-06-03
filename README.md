@@ -101,8 +101,8 @@ TestStorage.storage.setItem({
 ```
 
 > [!WARNING]
-> setItem applyes object that corresponds to yours storage model - if you add keyPath to params it must be in object that you put to the setItem method
-> in this example this id property "id"
+> setItem applyes object that corresponds to yours storage model - if you add keyPath to params it must be in object that you put to the setItem method.
+> In this example this is property "id"
 
 You can provide second argument for setItem to update particular item in storage:
 

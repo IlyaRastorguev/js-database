@@ -1,7 +1,7 @@
 {
   "name": "js-database",
   "main": "lib/index.js",
-  "version": "0.1.9",
+  "version": "0.2.0",
   "author": {
     "email": "Rastorguew94@gmail.com",
     "name": "Ilya Rastorguev"
