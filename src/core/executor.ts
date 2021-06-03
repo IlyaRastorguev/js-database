@@ -8,10 +8,6 @@ export class DataBaseExecutor extends EventHandler {
   private storages: Set<StorageType>;
   private indexeddb = window.indexedDB;
 
-  private dbTransaction = window.IDBTransaction;
-
-  private dbKeyRange = window.IDBKeyRange;
-
   constructor(
     instanseName: string,
     version: number,
@@ -28,7 +24,7 @@ export class DataBaseExecutor extends EventHandler {
       this.fireEvent("onDataBaseReady", { status: true });
     };
     request.onerror = (ev) => {
-      console.info(
+      console.error(
         "the initialization of the indexed db ended with error: ",
         ev
       );
