@@ -121,7 +121,19 @@ export class BaseStorage<T = {}, M = ""> extends EventHandler {
       );
   }
 
-  public setItems(items: T[]) {}
+  /**
+   * Method used for setting list of item to the storage
+   */
+  public setItems<T>(items: T[]) {
+    this.dataBaseExecutor.setList(
+        this.model.name,
+        items,
+        () => {
+          this.fireEvent(this.writeEventName);
+        },
+        () => {}
+      );
+  }
   /**
    * Method used for removing item from storage by key
    */
