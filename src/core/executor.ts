@@ -19,11 +19,9 @@ export class DataBaseExecutor extends EventHandler {
         this.storages = new Set([...storages]);
         const request = this.indexeddb.open(this.dbInstanceName, version);
 
-        this.storages.forEach((storage) => {
-            storage.init(
-                new (storage)(this)
-            );
-        });
+    this.storages.forEach((storage) => {
+      storage.init(this);
+    });
 
         request.onsuccess = () => {
             this.fireEvent(DataBaseReadyEvent, {status: true});

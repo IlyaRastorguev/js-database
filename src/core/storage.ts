@@ -10,22 +10,21 @@ import { EventHandler } from "./eventHandler";
 export class BaseStorage<T = {}, M = ""> extends EventHandler {
   private _model: IModel = {} as IModel;
 
-  private dataBaseExecutor;
+  private dataBaseExecutor = {} as DataBaseExecutor;
   private writeEventName: string = `${this.constructor.name}_write`;
   private removeEventName: string = `${this.constructor.name}_remove`;
 
-  static storage: BaseStorage;
+  static storage?: any;
 
-  constructor(executor: DataBaseExecutor) {
+  constructor() {
     super();
-    this.dataBaseExecutor = executor;
   }
 
   /**
-   * Creates instatce of storage and set it to storage field
+   * Set executor for database
    */
-  public static init(storage: BaseStorage) {
-    this.storage = storage;
+  public static init(executor: DataBaseExecutor) {
+    this.storage.dataBaseExecutor = executor;
   }
 
   public get model() {
