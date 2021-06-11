@@ -115,6 +115,22 @@ TestStorage.storage.setItem(
 );
 ```
 
+You can set list of items like that:
+
+```javascript
+TestStorage.storage.setItems(
+  [
+    {
+      data: { any: { type: { of: "data" } } },
+    },
+    {
+      data: { any: { type: { of: "data" } } },
+    }
+  ]
+);
+```
+
+
 ### **Get item**
 
 Basic getter:
