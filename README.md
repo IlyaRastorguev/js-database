@@ -18,12 +18,20 @@ Next step create your first storage model. You can do it easily:
 import { BaseStorage } from "js-database";
 
 export class TestStorage extends BaseStorage {
+  static storage = new TestStorage()
+  
   model = {
     name: "Test",
     params: {
       keyPath: "id",
     },
   };
+  
+  // this method calls on first storage initialization and when db version increments
+  applyMigrations(objectStore: IDBObjectStore) {
+    objectStore.createIndex("is_enabled", "enabled"); //you can create indexies
+    this.setItem({}) //you can set default values to storage
+  }
 }
 ```
 
@@ -114,6 +122,22 @@ TestStorage.storage.setItem(
   key
 );
 ```
+
+You can set list of items like that:
+
+```javascript
+TestStorage.storage.setItems(
+  [
+    {
+      data: { any: { type: { of: "data" } } },
+    },
+    {
+      data: { any: { type: { of: "data" } } },
+    }
+  ]
+);
+```
+
 
 ### **Get item**
 
