@@ -20,9 +20,7 @@ export class DataBaseExecutor extends EventHandler {
     const request = this.indexeddb.open(this.dbInstanceName, version);
 
     this.storages.forEach((storage) => {
-      storage.init(
-        new (storage as { new (executor: DataBaseExecutor): BaseStorage })(this)
-      );
+      storage.init(this);
     });
 
     request.onsuccess = () => {
