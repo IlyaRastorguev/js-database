@@ -1,6 +1,6 @@
-# Js-database - library for simple indexeddb usage
+# Js-database
 
-## **Usage guide**
+## **library for simple indexeddb usage**
 
 ### **Let's start**
 
@@ -178,7 +178,38 @@ TestStorage.storage
   .catch((e) => {
     console.warn(e);
   });
+
 ```
+
+Get items filtered by index:
+
+```javascript
+TestStorage.storage
+  .getItemsByQuery(query, index) // index is optional
+  .then((items) => {
+    setList(items);
+  })
+  .catch((e) => {
+    console.warn(e);
+  });
+```
+
+You can create queries using Query class:
+
+```javascript
+import {Query} from "js-database";
+
+Query.bound("A", "B", true, true)
+
+Query.lowerBound("A", true)
+
+Query.upperBound("B", true)
+
+Query.only("value")
+
+```
+
+for more information visit https://developer.mozilla.org/en-US/docs/Web/API/IDBKeyRange
 
 ### **Removing items**
 

@@ -70,7 +70,7 @@ export class BaseStorage<T = {}, M = ""> extends EventHandler {
    * @returns any
    */
   public getItem(key: M) {
-    return new Promise((resolve, reject) => {
+    return new Promise<T>((resolve, reject) => {
       this.dataBaseExecutor.get(this.model.name, key, resolve, reject);
     });
   }
@@ -80,7 +80,7 @@ export class BaseStorage<T = {}, M = ""> extends EventHandler {
    * @returns any[]
    */
   public getAllItems() {
-    return new Promise((resolve, reject) => {
+    return new Promise<T>((resolve, reject) => {
       this.dataBaseExecutor.getAll(this.model.name, resolve, reject);
     });
   }
@@ -90,9 +90,15 @@ export class BaseStorage<T = {}, M = ""> extends EventHandler {
    * @returns Map<any, any>
    */
   public getAllItemsWithKeys() {
-    return new Promise((resolve, reject) => {
+    return new Promise<T>((resolve, reject) => {
       this.dataBaseExecutor.getAllWithKeys(this.model.name, resolve, reject);
     });
+  }
+
+  public getItemsByQuery(query: IDBKeyRange, index?: any) {
+    return new Promise<T>((resolve, reject) => {
+      this.dataBaseExecutor.getWithQuery(this.model.name, query, index, resolve, reject)
+    })
   }
 
   /**
