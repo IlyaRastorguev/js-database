@@ -66,7 +66,7 @@ export class DataBaseExecutor extends EventHandler {
     get(
         from: string,
         key: any,
-        onSuccess: (value: unknown) => void,
+        onSuccess: (value: any) => void,
         onError: (reason?: any) => void
     ) {
         const request = this.indexeddb.open(this.dbInstanceName);
@@ -91,7 +91,7 @@ export class DataBaseExecutor extends EventHandler {
 
     getAll(
         from: string,
-        onSuccess: (value: unknown) => void,
+        onSuccess: (value: any) => void,
         onError: (reason?: any) => void
     ) {
         const request = this.indexeddb.open(this.dbInstanceName);
@@ -114,7 +114,7 @@ export class DataBaseExecutor extends EventHandler {
 
     getAllWithKeys(
         from: string,
-        onSuccess: (value: unknown) => void,
+        onSuccess: (value: any) => void,
         onError: (reason?: any) => void
     ) {
         const request = this.indexeddb.open(this.dbInstanceName);
@@ -140,6 +140,38 @@ export class DataBaseExecutor extends EventHandler {
                     onSuccess(items);
                 }
             };
+        };
+    }
+
+    getWithQuery(
+        from: string,
+        query: IDBKeyRange,
+        index: any,
+        onSuccess: (value: any) => void,
+        onError: (reason?: any) => void,
+    ) {
+        const request = this.indexeddb.open(this.dbInstanceName);
+        request.onerror = (ev) => {
+            onError(ev.toString());
+        };
+        request.onsuccess = ({target: {result}}: any) => {
+            const list: any[] = []
+            const db = result;
+            const transaction = db.transaction([from], "readwrite");
+            let objectStore = transaction.objectStore(from);
+
+            if (index) {
+                objectStore = objectStore.index(index)
+            }
+
+            objectStore.openCursor(query).onsuccess = ({target: {result: cursor}}: any) => {
+                if (cursor) {
+                    list.push(cursor.value)
+                    cursor.continue()
+                } else {
+                   onSuccess(list);
+                }
+            }
         };
     }
 
