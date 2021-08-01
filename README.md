@@ -58,52 +58,39 @@ export class TestStorage extends BaseStorage {
 }
 ```
 
-### **Initialize database**
+### **Initialize database (Vanila)**
 
 After creating yours storage class, you need to initialize database like that:
 
 ```javascript
-import {initializeDatabase} from "js-database";
+import {initDatabase} from "js-database";
 
-initializeDatabase("TEST", 1, TestStorage);
+initDatabase("TEST", 1, () => fireAfterInitialization(), TestStorage);
 ```
 
 That's it! Now you can use "TestStorage" for storing data
 
 Now let's talk how to work with our storage
 
-### **Waiting for initialization**
-
-In some cases for example when database is updating you need to hold of using database from your app. For that case you
-can subscribe for 'ready' event that fires when database is ready for accept transactions
-
+### **Initialize database (react)**
 For react users:
 
 ```javascript
 import React, {useState} from "react";
 import {useStorageInit} from "js-database";
+import {ToDoStorage} from "./todo"
 
 const Component = () => {
   const [isReady, setReady] = useState(false);
 
-  useStorageInit(() => {
+  useStorageInit("MyStorage", 1, () => {
     setReady(true);
-  });
+  }, ToDoStorage);
 
   if (isReady) return <>Some code</>;
 
   return <></>;
 };
-```
-
-For vanilla js:
-
-```javascript
-import {subscribeForDatabaseReady} from "js-database";
-
-subscribeForDatabaseReady(() => {
-  //do something
-});
 ```
 
 ### **Set data to storage**
