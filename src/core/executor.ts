@@ -1,20 +1,15 @@
-import {StorageType} from "../types";
-import {EventHandler} from "./eventHandler";
+import {IStaticStorage} from "../types";
 
-
-export const DataBaseReadyEvent = "onDataBaseReady"
-
-export class DataBaseExecutor extends EventHandler {
-    private dbInstanceName: string;
-    private storages: Set<StorageType>;
+export class DataBaseExecutor {
+    private readonly dbInstanceName: string;
+    private storages: Set<IStaticStorage>;
     private indexeddb = window.indexedDB;
 
     constructor(
         instanseName: string,
         version: number,
-        ...storages: StorageType[]
+        ...storages: IStaticStorage[]
     ) {
-        super();
         this.dbInstanceName = instanseName;
         this.storages = new Set([...storages]);
         const request = this.indexeddb.open(this.dbInstanceName, version);
@@ -24,13 +19,11 @@ export class DataBaseExecutor extends EventHandler {
         });
 
         request.onsuccess = () => {
-            this.fireEvent(DataBaseReadyEvent, {status: true});
+            this.fireEvent(this.dbInstanceName, {status: true});
         };
         request.onerror = (ev) => {
-            console.error(
-                "the initialization of the indexed db ended with error: ",
-                ev
-            );
+            this.fireEvent(this.dbInstanceName, {status: false});
+            console.error("Невозможно создать БД", ev)
         };
 
         request.onupgradeneeded = ({target: {result}}: any) => {
@@ -145,8 +138,8 @@ export class DataBaseExecutor extends EventHandler {
 
     getWithQuery(
         from: string,
-        query: IDBKeyRange,
-        index: any,
+        query: IDBKeyRange | IDBKeyRange[],
+        index: any | any[],
         onSuccess: (value: any) => void,
         onError: (reason?: any) => void,
     ) {
@@ -161,15 +154,28 @@ export class DataBaseExecutor extends EventHandler {
             let objectStore = transaction.objectStore(from);
 
             if (index) {
-                objectStore = objectStore.index(index)
+                if (Array.isArray(index)) {
+                    objectStore = objectStore.index(index.join(", "))
+                } else objectStore = objectStore.index(index)
             }
 
-            objectStore.openCursor(query).onsuccess = ({target: {result: cursor}}: any) => {
+            if (Array.isArray(query)) {
+                query.forEach((q) => {
+                    objectStore.openCursor(q).onsuccess = ({target: {result: cursor}}: any) => {
+                        if (cursor) {
+                            list.push(cursor.value)
+                            cursor.continue()
+                        } else {
+                            onSuccess(list);
+                        }
+                    }
+                })
+            } else objectStore.openCursor(query).onsuccess = ({target: {result: cursor}}: any) => {
                 if (cursor) {
                     list.push(cursor.value)
                     cursor.continue()
                 } else {
-                   onSuccess(list);
+                    onSuccess(list);
                 }
             }
         };
@@ -178,8 +184,10 @@ export class DataBaseExecutor extends EventHandler {
     set(
         from: string,
         value: any,
-        onSuccess: (value: unknown) => void,
-        onError: (reason?: any) => void
+        onSuccess: (value: unknown) => void = () => {
+        },
+        onError: (reason?: any) => void = () => {
+        }
     ) {
         const request = this.indexeddb.open(this.dbInstanceName);
         request.onerror = (ev) => {
@@ -189,13 +197,15 @@ export class DataBaseExecutor extends EventHandler {
             const db = result;
             const transaction = db.transaction([from], "readwrite");
             const objectStore = transaction.objectStore(from);
-            const request = objectStore.put(value);
-            request.onerror = function (event: any) {
-                onError(event.toString());
-            };
-            request.onsuccess = function ({target: {result}}: any) {
-                onSuccess(result);
-            };
+            if (objectStore) {
+                const request = objectStore.put(value);
+                request.onerror = function (event: any) {
+                    onError(event.toString());
+                };
+                request.onsuccess = function ({target: {result}}: any) {
+                    onSuccess(result);
+                };
+            }
         };
     }
 
@@ -214,17 +224,20 @@ export class DataBaseExecutor extends EventHandler {
             const db = result;
             const transaction = db.transaction([from], "readwrite");
             const objectStore = transaction.objectStore(from);
-            const request = objectStore.put(value, key);
-            request.onerror = function (event: any) {
-                onError(event.toString());
-            };
-            request.onsuccess = function ({target: {result}}: any) {
-                onSuccess(result);
-            };
+            if (objectStore) {
+                const request = objectStore.put(value, key);
+                request.onerror = function (event: any) {
+                    onError(event.toString());
+                };
+                request.onsuccess = function ({target: {result}}: any) {
+                    onSuccess(result);
+                };
+            }
+
         };
     }
 
-    setList(from: string, value: any[], onSuccess: () => void,
+    setList(from: string, value: any[], onSuccess: (value: any[]) => void,
             onError: (reason?: any) => void) {
         const request = this.indexeddb.open(this.dbInstanceName);
         request.onerror = (ev) => {
@@ -234,14 +247,21 @@ export class DataBaseExecutor extends EventHandler {
             const db = result;
             const transaction = db.transaction([from], "readwrite");
             const objectStore = transaction.objectStore(from);
-            let request;
-            value.forEach((item) => {
-                const request = objectStore.put(item)
-                request.onerror = function (event: any) {
-                    onError(event.toString());
-                };
+            Promise.all(value.map((item) => {
+                return new Promise((resolve, reject) => {
+                    const request = objectStore.put(item)
+                    request.onerror = function (event: any) {
+                        reject(event)
+                    };
+                    request.onsuccess = function ({target: {result}}: any) {
+                        resolve(result)
+                    };
+                })
+            })).then((keys) => {
+                onSuccess(keys);
+            }).catch((e) => {
+                console.error(e.toString())
             })
-            onSuccess();
         };
     }
 
@@ -260,13 +280,65 @@ export class DataBaseExecutor extends EventHandler {
             const db = result;
             const transaction = db.transaction([from], "readwrite");
             const objectStore = transaction.objectStore(from);
-            const request = objectStore.delete(key);
-            request.onerror = function (event: any) {
-                onError(event.toString());
-            };
-            request.onsuccess = function () {
-                onSuccess();
-            };
+            if (objectStore) {
+                const request = objectStore.delete(key);
+                request.onerror = function (event: any) {
+                    onError(event.toString());
+                };
+                request.onsuccess = function () {
+                    onSuccess();
+                };
+            }
+
+        };
+    }
+
+    removeWithQuery(
+        from: string,
+        query: IDBKeyRange | IDBKeyRange[],
+        index: any | any[],
+        onSuccess: (keys: Set<any>) => void,
+        onError: (reason?: any) => void,
+    ) {
+        const request = this.indexeddb.open(this.dbInstanceName);
+        request.onerror = (ev) => {
+            onError(ev.toString());
+        };
+        request.onsuccess = ({target: {result}}: any) => {
+            const keys: Set<any> = new Set()
+            const db = result;
+            const transaction = db.transaction([from], "readwrite");
+            let objectStore = transaction.objectStore(from);
+
+            if (index) {
+                if (Array.isArray(index)) {
+                    objectStore = objectStore.index(index.join(", "))
+                } else objectStore = objectStore.index(index)
+            }
+
+            if (Array.isArray(query)) {
+                query.forEach((q) => {
+                    objectStore.openCursor(q).onsuccess = ({target: {result: cursor}}: any) => {
+                        if (cursor) {
+                            keys.add(cursor.key)
+                            cursor.delete()
+                            cursor.continue()
+                        } else {
+                            onSuccess(keys);
+                        }
+                    }
+
+                })
+            } else
+                objectStore.openCursor(query).onsuccess = ({target: {result: cursor}}: any) => {
+                    if (cursor) {
+                        keys.add(cursor.key)
+                        cursor.delete()
+                        cursor.continue()
+                    } else {
+                        onSuccess(keys);
+                    }
+                }
         };
     }
 
@@ -283,13 +355,19 @@ export class DataBaseExecutor extends EventHandler {
             const db = result;
             const transaction = db.transaction([from], "readwrite");
             const objectStore = transaction.objectStore(from);
-            const request = objectStore.clear();
-            request.onerror = function (event: any) {
-                onError(event.toString());
-            };
-            request.onsuccess = function ({target: {result}}: any) {
-                onSuccess(result);
-            };
+            if (objectStore) {
+                const request = objectStore.clear();
+                request.onerror = function (event: any) {
+                    onError(event.toString());
+                };
+                request.onsuccess = function ({target: {result}}: any) {
+                    onSuccess(result);
+                };
+            }
         };
+    }
+
+    protected fireEvent(eventName: string, detail: any) {
+        window.dispatchEvent(new CustomEvent(eventName, {detail}))
     }
 }

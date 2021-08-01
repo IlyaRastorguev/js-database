@@ -1,29 +1,27 @@
-import { DataBaseReadyEvent } from "./../core/executor";
-import { StorageEventType } from "../types";
+import {IStaticStorage, StorageEventType} from "../types";
 import { useRef, useEffect } from "react";
-import { Observer } from "../core/observer";
+import {DataBaseExecutor} from "../core/executor";
 
 export const useStorageEvent = <T extends StorageEventType>(
   storage: any,
-  onWrite?: (result: T) => {},
-  onRemove?: (result: T) => {}
+  onWrite?: (result: T) => void,
+  onRemove?: (result: T) => void,
 ) => {
-  const observer = useRef(new Observer(storage.storage, onWrite, onRemove));
-
+  const subscribed = useRef(() => {})
   useEffect(() => {
-    observer.current.subscribe();
+    subscribed.current = storage.storage.subscribe(onWrite, onRemove)
     return () => {
-      observer.current.unsubscribe();
+      subscribed.current()
     };
-  }, []);
+  }, [onWrite, onRemove]);
 };
 
-export const useStorageInit = (action: () => void) => {
+export const useStorageInit = (databaseName: string, dataBaseVersion: number, action: () => void, ...storages: IStaticStorage[]) => {
   useEffect(() => {
-    window.addEventListener(DataBaseReadyEvent, action);
-
+    window.addEventListener(databaseName, action);
+    new DataBaseExecutor(databaseName, dataBaseVersion, ...storages)
     return () => {
-      window.removeEventListener(DataBaseReadyEvent, action);
+      window.removeEventListener(databaseName, action);
     };
   }, []);
 };

@@ -2,6 +2,13 @@
 
 ## **library for simple indexeddb usage**
 
+### **LIMITATION**
+
+> [!WARNING]
+> Firefox disable indexedDB in private mode, be careful.
+> I hope, this will change soon
+
+
 ### **Let's start**
 
 First what you need to do is install this library to yours project:
@@ -15,18 +22,18 @@ npm i js-database --save
 Next step create your first storage model. You can do it easily:
 
 ```javascript
-import { BaseStorage } from "js-database";
+import {BaseStorage} from "js-database";
 
 export class TestStorage extends BaseStorage {
   static storage = new TestStorage()
-  
+
   model = {
     name: "Test",
     params: {
       keyPath: "id",
     },
   };
-  
+
   // this method calls on first storage initialization and when db version increments
   applyMigrations(objectStore: IDBObjectStore) {
     objectStore.createIndex("is_enabled", "enabled"); //you can create indexies
@@ -35,10 +42,11 @@ export class TestStorage extends BaseStorage {
 }
 ```
 
-if you don't whant or your data haven't unique id to be used for keyPath you can add autoincrement option to yours model:
+if you don't whant or your data haven't unique id to be used for keyPath you can add autoincrement option to yours
+model:
 
 ```javascript
-import { BaseStorage } from "js-database";
+import {BaseStorage} from "js-database";
 
 export class TestStorage extends BaseStorage {
   model = {
@@ -55,7 +63,7 @@ export class TestStorage extends BaseStorage {
 After creating yours storage class, you need to initialize database like that:
 
 ```javascript
-import { initializeDatabase } from "js-database";
+import {initializeDatabase} from "js-database";
 
 initializeDatabase("TEST", 1, TestStorage);
 ```
@@ -66,13 +74,14 @@ Now let's talk how to work with our storage
 
 ### **Waiting for initialization**
 
-In some cases for example when database is updating you need to hold of using database from your app. For that case you can subscribe for 'ready' event that fires when database is ready for accept transactions
+In some cases for example when database is updating you need to hold of using database from your app. For that case you
+can subscribe for 'ready' event that fires when database is ready for accept transactions
 
 For react users:
 
 ```javascript
-import React, { useState } from "react";
-import { useStorageInit } from "js-database";
+import React, {useState} from "react";
+import {useStorageInit} from "js-database";
 
 const Component = () => {
   const [isReady, setReady] = useState(false);
@@ -90,7 +99,7 @@ const Component = () => {
 For vanilla js:
 
 ```javascript
-import { subscribeForDatabaseReady } from "js-database";
+import {subscribeForDatabaseReady} from "js-database";
 
 subscribeForDatabaseReady(() => {
   //do something
@@ -104,7 +113,7 @@ Basic adding:
 ```javascript
 TestStorage.storage.setItem({
   id: 1,
-  data: { any: { type: { of: "data" } } },
+  data: {any: {type: {of: "data"}}},
 });
 ```
 
@@ -117,7 +126,7 @@ You can provide second argument for setItem to update particular item in storage
 ```javascript
 TestStorage.storage.setItem(
   {
-    data: { any: { type: { of: "data" } } },
+    data: {any: {type: {of: "data"}}},
   },
   key
 );
@@ -129,15 +138,34 @@ You can set list of items like that:
 TestStorage.storage.setItems(
   [
     {
-      data: { any: { type: { of: "data" } } },
+      data: {any: {type: {of: "data"}}},
     },
     {
-      data: { any: { type: { of: "data" } } },
+      data: {any: {type: {of: "data"}}},
     }
   ]
 );
 ```
 
+Method used for partial update of storage item:
+
+```javascript
+TestStorage.storage.partialUpdate(key, {fieldToUpdate: "value"});
+```
+
+Method used for partial update items that matches with query
+
+```javascript
+TestStorage.storage.partialUpdateByQuery({fieldToUpdate: "value"}, query, index);
+```
+
+Method used for partial update all items in storage
+
+```javascript
+TestStorage.storage.partialAllUpdate(
+  {fieldToUpdate: "value"}
+);
+```
 
 ### **Get item**
 
@@ -207,16 +235,24 @@ Query.upperBound("B", true)
 
 Query.only("value")
 
+Query.many("value1", "value2")
+
 ```
 
 for more information visit https://developer.mozilla.org/en-US/docs/Web/API/IDBKeyRange
 
 ### **Removing items**
 
-Remuve single item:
+Remove single item:
 
 ```javascript
 TestStorage.storage.removeItem(id);
+```
+
+Remove items matching query:
+
+```javascript
+TestStorage.storage.removeItemByQuery(query, index) // index is optional
 ```
 
 Remove all items:
@@ -233,8 +269,8 @@ For React users:
 
 ```javascript
 import React from "react";
-import { useStorageEvent } from "js-database";
-import { TestStorage } from "test-storage";
+import {useStorageEvent} from "js-database";
+import {TestStorage} from "test-storage";
 
 const Component = () => {
   const doSomeThingOnAddingNewItems = useCallback(() => {
@@ -258,8 +294,8 @@ const Component = () => {
 For vanilla js:
 
 ```javascript
-import { subscribeForChanges } from "js-database";
-import { TestStorage } from "test-storage";
+import {subscribeForChanges} from "js-database";
+import {TestStorage} from "test-storage";
 
 const doSomeThingOnAddingNewItems = () => {
   //do some operations

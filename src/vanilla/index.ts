@@ -1,17 +1,11 @@
-import { DataBaseReadyEvent } from "../core/executor";
-import { Observer } from "../core/observer";
-import { StorageEventType, StorageType } from "../types";
+import {IStaticStorage} from "../types";
+import {DataBaseExecutor} from "../core/executor";
 
-export const subscribeForChanges = <T extends StorageEventType>(
-  storage: StorageType,
-  onWrite?: (result: T) => {},
-  onRemove?: (result: T) => {}
-) => {
-  const observer = new Observer(storage.storage, onWrite, onRemove);
-
-  observer.subscribe();
+export const subscribeForDatabaseReady = (databaseName: string, action: () => void) => {
+  window.addEventListener(databaseName, action);
 };
 
-export const subscribeForDatabaseReady = (action: () => void) => {
-  window.addEventListener(DataBaseReadyEvent, action);
-};
+export const initDataBase = (dataBaseName: string, dataBaseVersion: number, callback: () => void, ...storages: IStaticStorage[]) => {
+  window.addEventListener(dataBaseName, callback)
+  new DataBaseExecutor(dataBaseName, dataBaseVersion, ...storages)
+}
