@@ -1,52 +1,59 @@
-import {EventHandlerParams, EventHandlerType} from "../types";
+import {
+  EventHandlerParams,
+  EventHandlerType,
+  IEventHandler,
+  ISubscribe,
+} from "../types";
 import EventEmitter from "events";
 
-export class EventHandler<K, V> extends EventEmitter {
-    private eventTarget: EventTarget;
-    private writeEventName: string = "";
-    private deleteEventName: string = "";
+export class EventHandler<K, V> extends EventEmitter
+  implements IEventHandler<K, V> {
+  private writeEventName: string = "";
+  private deleteEventName: string = "";
 
-    constructor(target: EventTarget = window) {
-        super()
-        this.eventTarget = target
+  constructor() {
+    super();
+  }
+
+  protected createEvents(eventType: string) {
+    this.writeEventName = `${eventType}_write`;
+    this.deleteEventName = `${eventType}_delete`;
+  }
+
+  public onWrite(params?: EventHandlerParams<K, V>) {
+    this.emit(this.writeEventName, params);
+  }
+
+  public onDelete(params?: EventHandlerParams<K, V>) {
+    this.emit(this.deleteEventName, params);
+  }
+
+  public subscribe({ onWrite, onRemove }: ISubscribe<K, V>): () => void {
+    if (onWrite) {
+      this.on(this.writeEventName, onWrite);
+      this.setMaxListeners(this.getMaxListeners() + 1);
     }
 
-    protected createEvents(eventType: string) {
-       this.writeEventName = `${eventType}_write`
-        this.deleteEventName = `${eventType}_delete`
+    if (onRemove) {
+      this.on(this.deleteEventName, onRemove);
+      this.setMaxListeners(this.getMaxListeners() + 1);
     }
 
-    public onWrite(params?: EventHandlerParams<K, V>) {
-        this.emit(this.writeEventName, params)
+    return () => this.unsubscribe(onWrite, onRemove);
+  }
+
+  private unsubscribe(
+    writeHandler?: EventHandlerType<K, V>,
+    deleteHandler?: EventHandlerType<K, V>
+  ) {
+    if (writeHandler) {
+      this.off(this.writeEventName, writeHandler);
+      this.setMaxListeners(this.getMaxListeners() - 1);
     }
 
-    public onDelete(params?: EventHandlerParams<K, V>) {
-        this.emit(this.deleteEventName, params)
+    if (deleteHandler) {
+      this.off(this.deleteEventName, deleteHandler);
+      this.setMaxListeners(this.getMaxListeners() - 1);
     }
-
-    public subscribe(writeHandler?: EventHandlerType<K, V>, deleteHandler?: EventHandlerType<K, V>): () => void {
-        if (writeHandler) {
-            this.on(this.writeEventName, writeHandler)
-            this.setMaxListeners(this.getMaxListeners() + 1)
-        }
-
-        if (deleteHandler) {
-            this.on(this.deleteEventName, deleteHandler)
-            this.setMaxListeners(this.getMaxListeners() + 1)
-        }
-
-        return () => this.unsubscribe(writeHandler, deleteHandler)
-    }
-
-     private unsubscribe(writeHandler?: EventHandlerType<K, V>, deleteHandler?: EventHandlerType<K, V>) {
-        if (writeHandler) {
-            this.off(this.writeEventName, writeHandler)
-            this.setMaxListeners(this.getMaxListeners() - 1)
-        }
-
-        if (deleteHandler) {
-            this.off(this.deleteEventName, deleteHandler)
-            this.setMaxListeners(this.getMaxListeners() - 1)
-        }
-    }
+  }
 }
