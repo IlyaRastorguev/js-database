@@ -14,7 +14,6 @@ export const useStorageEvent = <T extends StorageEventType>(
 ) => {
   const subscribed = useRef(() => {});
   useEffect(() => {
-    onWrite && onWrite()
     subscribed.current = eventHandler.subscribe({ onWrite, onRemove });
     return () => {
       subscribed.current();
