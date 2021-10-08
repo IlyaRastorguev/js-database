@@ -1,27 +1,64 @@
-import {IStaticStorage, StorageEventType} from "../types";
+import {
+  EventHandlerType,
+  IBaseStorage,
+  IEventHandler,
+  StorageEventType,
+} from "../types";
 import { useRef, useEffect } from "react";
-import {DataBaseExecutor} from "../core/executor";
+import { DataBaseExecutor } from "../core/executor";
 
 export const useStorageEvent = <T extends StorageEventType>(
-  storage: any,
-  onWrite?: (result: T) => void,
-  onRemove?: (result: T) => void,
+  eventHandler: IEventHandler<any, any>,
+  onWrite?: EventHandlerType<any, any>,
+  onRemove?: EventHandlerType<any, any>
 ) => {
-  const subscribed = useRef(() => {})
+  const subscribed = useRef(() => {});
   useEffect(() => {
-    subscribed.current = storage.storage.subscribe(onWrite, onRemove)
+    onWrite && onWrite()
+    subscribed.current = eventHandler.subscribe({ onWrite, onRemove });
     return () => {
-      subscribed.current()
+      subscribed.current();
     };
   }, [onWrite, onRemove]);
 };
 
-export const useStorageInit = (databaseName: string, dataBaseVersion: number, action: () => void, ...storages: IStaticStorage[]) => {
+export const useStorageWriteEvent = <T extends StorageEventType>(
+  storage: IBaseStorage<any, any>,
+  onWrite?: EventHandlerType<any, any>
+) => {
+  const subscribed = useRef(() => {});
   useEffect(() => {
-    window.addEventListener(databaseName, action);
-    new DataBaseExecutor(databaseName, dataBaseVersion, ...storages)
+    subscribed.current = storage.subscribe({ onWrite });
     return () => {
-      window.removeEventListener(databaseName, action);
+      subscribed.current();
+    };
+  }, [onWrite]);
+};
+
+export const useStorageRemoveEvent = <T extends StorageEventType>(
+  storage: IBaseStorage<any, any>,
+  onRemove?: EventHandlerType<any, any>
+) => {
+  const subscribed = useRef(() => {});
+  useEffect(() => {
+    subscribed.current = storage.subscribe({ onRemove });
+    return () => {
+      subscribed.current();
+    };
+  }, [onRemove]);
+};
+
+export const useStorageInit = (
+  databaseName: string,
+  dataBaseVersion: number,
+  action: () => void,
+  ...storages: IBaseStorage<any, any>[]
+) => {
+  useEffect(() => {
+    self.addEventListener(databaseName, action);
+    new DataBaseExecutor(databaseName, dataBaseVersion, ...storages);
+    return () => {
+      self.removeEventListener(databaseName, action);
     };
   }, []);
 };

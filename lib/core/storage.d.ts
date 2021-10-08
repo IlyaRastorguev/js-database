@@ -10,15 +10,13 @@ import { IBaseStorage } from "../types";
 export declare class BaseStorage<T = {}, M = ""> extends EventHandler<M, T> implements IBaseStorage<M, T> {
     private _model;
     private dataBaseExecutor;
-    static storage: IBaseStorage<any, any>;
     constructor();
     /**
      * Set executor for database
      */
-    static init(executor: DataBaseExecutor): void;
+    init(executor: DataBaseExecutor): void;
     get model(): IModel;
     set model(model: IModel);
-    getObjectStore(): Promise<unknown>;
     /**
      * Used when version of DB is incremented
      */
@@ -57,16 +55,16 @@ export declare class BaseStorage<T = {}, M = ""> extends EventHandler<M, T> impl
      * @param key - key of item
      * @param chunk - object with keys, that will be updated
      */
-    partialUpdate(key: M, chunk: {}): void;
+    partialUpdate(key: M, chunk: {}): Promise<void>;
     /**
      * Method used for partial update items that matches with query
      * @param chunk - object with keys, that will be updated
      * @param query - key range of items
      * @param index - index for query
      */
-    partialUpdateByQuery(chunk: {}, query: IDBKeyRange | IDBKeyRange[], index?: any): Promise<void>;
+    partialUpdateByQuery(chunk: {}, query: IDBKeyRange | IDBKeyRange[], index?: any): Promise<M[]>;
     /**
-     * Method used for partial update items that matches with query
+     * Method used for partial update all items in storage
      * @param chunk - object with keys, that will be updated
      */
     partialAllUpdate(chunk: {}): Promise<void>;
@@ -83,5 +81,7 @@ export declare class BaseStorage<T = {}, M = ""> extends EventHandler<M, T> impl
      * @returns Map<any, any>
      */
     removeAllItems(): void;
+    private createForeignKeyRemoveHandler;
+    private initForeignKeys;
 }
 //# sourceMappingURL=storage.d.ts.map
